@@ -2,6 +2,7 @@
 import BaseHead from "../components/BaseHead.astro";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
+import Speakers from "../components/Speakers.astro";
 import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
 ---
 
@@ -13,51 +14,77 @@ import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
     <body>
         <Header />
         <main>
-            <h1>Todo :</h1>
-            <ul>
-                <li>
-                    L'événement
-                    <ul>
-                        <li>Définir la date (2 soirées consécutives)</li>
-                        <li>Définir le lieu : Discord Astro-FR</li>
-                        <li>
-                            Rédiger un CFP simple pour des présentations de 10
-                            ou 20 minutes
-                        </li>
-                        <li>
-                            Formulaire temporaire :
-                            https://framaforms.org/soumission-de-presentation-pour-la-table-ronde-optique-amateur-francophone-des-4-5-mars-2026
-                        </li>
-                        <li>Nb intervenants : 12 (2x6)</li>
-                        <li>Collecter les participations : Framaform</li>
-                        <li>
-                            Mettre à jour ce site pour qu'il montre les
-                            participants et leurs présentations
-                        </li>
-                    </ul>
-                </li>
-                <li>
-                    La diffusion
-                    <ul>
-                        <li>Rédiger ce site un minimum</li>
-                        <li>
-                            Présenter le canal optique : participants réguliers,
-                            quelques réalisations
-                        </li>
-                        <li>Ouverture vers les forums</li>
-                        <li>
-                            Vidéo "comment rejoindre Discord et Astro-FR" pour
-                            les personnes moins à l'aise
-                        </li>
-                        <li>
-                            Newsletter pour donner des nouvelles des
-                            présentations collectées et rappeler les dates aux
-                            personnes s'étant inscrites
-                        </li>
-                    </ul>
-                </li>
-            </ul>
+            <section class="hero">
+                <h1>Table ronde optique amateur francophone</h1>
+                <p class="date">4 et 5 mars 2026 à 19h</p>
+            </section>
+
+            <section class="location">
+                <h2>Lieu</h2>
+                <p>
+                    L'événement se déroule sur le <a href="https://astro-fr.fr/" target="_blank">Discord Astro-FR</a>,
+                    dans le canal «&nbsp;fabrication&nbsp;et&nbsp;contrôle&nbsp;optiques&nbsp;».
+                </p>
+            </section>
+
+            <section class="cfp">
+                <h2>Appel à présentations</h2>
+                <p>
+                    Vous souhaitez présenter vos travaux ou partager votre expérience ?
+                    Soumettez une proposition de présentation (10 ou 20 minutes).
+                </p>
+                <p>
+                    <a href="https://framaforms.org/soumission-de-presentation-pour-la-table-ronde-optique-amateur-francophone-des-4-5-mars-2026" target="_blank" class="cta">
+                        Soumettre une présentation
+                    </a>
+                </p>
+            </section>
+
+            <Speakers />
         </main>
         <Footer />
     </body>
 </html>
+
+<style>
+    main {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .hero {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .hero h1 {
+        margin: 0 0 0.5rem 0;
+    }
+
+    .hero .date {
+        font-size: 1.25rem;
+        color: #555;
+    }
+
+    section {
+        margin-bottom: 2rem;
+    }
+
+    section h2 {
+        margin-bottom: 1rem;
+    }
+
+    .cta {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: var(--accent, #4a90d9);
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+    }
+
+    .cta:hover {
+        opacity: 0.9;
+    }
+</style>
