@@ -1,0 +1,170 @@
+---
+const events = [
+    {
+        title: "Table ronde optique amateur - Jour 1",
+        date: "4 mars",
+        start: "2026-03-04T19:00:00",
+        end: "2026-03-04T21:00:00",
+    },
+    {
+        title: "Table ronde optique amateur - Jour 2",
+        date: "5 mars",
+        start: "2026-03-05T19:00:00",
+        end: "2026-03-05T21:00:00",
+    },
+];
+
+const location = "Discord Astro-FR - canal fabrication et contrôle optiques";
+const description = "Table ronde optique amateur francophone\\n\\nPlus d'infos: https://table-ronde-optique-amateur-fr.github.io\\nDiscord: https://astro-fr.fr/";
+
+function toGoogleDate(isoDate: string): string {
+    return isoDate.replace(/[-:]/g, "").replace("T", "T");
+}
+
+function buildGoogleUrl(event: typeof events[0]): string {
+    const params = new URLSearchParams({
+        action: "TEMPLATE",
+        text: event.title,
+        dates: `${toGoogleDate(event.start)}/${toGoogleDate(event.end)}`,
+        details: description.replace(/\\n/g, "\n"),
+        location: location,
+        ctz: "Europe/Paris",
+    });
+    return `https://www.google.com/calendar/render?${params.toString()}`;
+}
+
+function buildOutlookUrl(event: typeof events[0]): string {
+    const params = new URLSearchParams({
+        subject: event.title,
+        startdt: event.start,
+        enddt: event.end,
+        body: description.replace(/\\n/g, "\n"),
+        location: location,
+        path: "/calendar/action/compose",
+    });
+    return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
+}
+---
+
+<div class="add-to-calendar">
+    <span class="calendar-label">Ajouter à l'agenda :</span>
+    <span class="calendar-days">
+        {events.map((event) => (
+            <span class="calendar-event">
+                <span class="event-date">{event.date}</span>
+                <a href={buildGoogleUrl(event)} target="_blank" rel="noopener" class="calendar-btn">Google</a>
+                <a href={buildOutlookUrl(event)} target="_blank" rel="noopener" class="calendar-btn">Outlook</a>
+                <button class="calendar-btn ics" data-title={event.title} data-start={event.start} data-end={event.end}>ICS/Apple</button>
+            </span>
+        ))}
+    </span>
+</div>
+
+<script define:vars={{ location, description }}>
+    function generateICS(title, start, end) {
+        const formatDate = (isoDate) => isoDate.replace(/[-:]/g, "");
+        const uid = `${start.replace(/[-:T]/g, "")}-${Math.random().toString(36).substr(2, 9)}@table-ronde-optique`;
+        const now = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+        return [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Table Ronde Optique Amateur//FR",
+            "CALSCALE:GREGORIAN",
+            "METHOD:PUBLISH",
+            "BEGIN:VTIMEZONE",
+            "TZID:Europe/Paris",
+            "BEGIN:STANDARD",
+            "DTSTART:19710101T030000",
+            "RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU",
+            "TZOFFSETFROM:+0200",
+            "TZOFFSETTO:+0100",
+            "END:STANDARD",
+            "BEGIN:DAYLIGHT",
+            "DTSTART:19710101T020000",
+            "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU",
+            "TZOFFSETFROM:+0100",
+            "TZOFFSETTO:+0200",
+            "END:DAYLIGHT",
+            "END:VTIMEZONE",
+            "BEGIN:VEVENT",
+            `UID:${uid}`,
+            `DTSTAMP:${now}`,
+            `DTSTART;TZID=Europe/Paris:${formatDate(start)}`,
+            `DTEND;TZID=Europe/Paris:${formatDate(end)}`,
+            `SUMMARY:${title}`,
+            `DESCRIPTION:${description.replace(/\\n/g, "\\n")}`,
+            `LOCATION:${location}`,
+            "END:VEVENT",
+            "END:VCALENDAR",
+        ].join("\r\n");
+    }
+
+    function downloadICS(title, start, end) {
+        const ics = generateICS(title, start, end);
+        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `table-ronde-optique-${start.split("T")[0]}.ics`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    document.querySelectorAll(".calendar-btn.ics").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            downloadICS(btn.dataset.title, btn.dataset.start, btn.dataset.end);
+        });
+    });
+</script>
+
+<style>
+    .add-to-calendar {
+        margin-top: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        font-size: 0.75rem;
+        color: #666;
+    }
+
+    .calendar-label {
+        color: #666;
+    }
+
+    .calendar-days {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .calendar-event {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+    }
+
+    .event-date {
+        font-weight: 500;
+        margin-right: 0.15rem;
+    }
+
+    .calendar-btn {
+        padding: 0.15rem 0.4rem;
+        font-size: 0.7rem;
+        border-radius: 3px;
+        text-decoration: none;
+        cursor: pointer;
+        border: 1px solid #ccc;
+        background: transparent;
+        color: #666;
+        font-family: inherit;
+    }
+
+    .calendar-btn:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+</style>
