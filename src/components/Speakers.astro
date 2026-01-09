@@ -36,66 +36,81 @@ function getExtension(url: string): string {
     return match ? match[1] : "jpg";
 }
 
-const speakers: Speaker[] = dataLines.map((line) => {
-    const parts = line.split("\t");
-    const name = parseTsvValue(parts[0] || "");
-    const photoUrl = parseTsvValue(parts[2] || "");
-    const extension = getExtension(photoUrl);
-    return {
-        name,
-        photoPath: `/speakers/${toSlug(name)}.${extension}`,
-        title: parseTsvValue(parts[4] || ""),
-        description: parseTsvValue(parts[5] || ""),
-    };
-}).filter((s) => s.name && s.title);
+const speakers: Speaker[] = dataLines
+    .map((line) => {
+        const parts = line.split("\t");
+        const name = parseTsvValue(parts[0] || "");
+        const photoUrl = parseTsvValue(parts[2] || "");
+        const extension = getExtension(photoUrl);
+        return {
+            name,
+            photoPath: `/speakers/${toSlug(name)}.${extension}`,
+            title: parseTsvValue(parts[4] || ""),
+            description: parseTsvValue(parts[5] || ""),
+        };
+    })
+    .filter((s) => s.name && s.title);
 ---
 
 <section class="speakers">
     <h2>Intervenants</h2>
     <div class="speakers-grid">
-        {speakers.map((speaker) => {
-            const needsTruncation = speaker.description.length > 240;
-            const truncated = needsTruncation
-                ? speaker.description.slice(0, 240).trimEnd() + "…"
-                : speaker.description;
-            return (
-                <article class="speaker-card">
-                    <img
-                        src={speaker.photoPath}
-                        alt={`Photo de ${speaker.name}`}
-                        class="speaker-photo"
-                        loading="lazy"
-                    />
-                    <div class="speaker-info">
-                        <h3>{speaker.name}</h3>
-                        <h4>{speaker.title}</h4>
-                        <p class="description" data-full={speaker.description} data-truncated={truncated}>
-                            {truncated}
-                        </p>
-                        {needsTruncation && (
-                            <button class="expand-btn" type="button">Lire la suite</button>
+        {
+            speakers.map((speaker) => {
+                const needsTruncation = speaker.description.length > 240;
+                const truncated = needsTruncation
+                    ? speaker.description.slice(0, 240).trimEnd() + "…"
+                    : speaker.description;
+                return (
+                    <article class="speaker-card">
+                        {speaker.photoPath.length ? (
+                            <img
+                                src={speaker.photoPath}
+                                alt={`Photo de ${speaker.name}`}
+                                class="speaker-photo"
+                                loading="lazy"
+                            />
+                        ) : (
+                            <div />
                         )}
-                    </div>
-                </article>
-            );
-        })}
+
+                        <div class="speaker-info">
+                            <h3>{speaker.name}</h3>
+                            <h4>{speaker.title}</h4>
+                            <p
+                                class="description"
+                                data-full={speaker.description}
+                                data-truncated={truncated}
+                            >
+                                {truncated}
+                            </p>
+                            {needsTruncation && (
+                                <button class="expand-btn" type="button">
+                                    Lire la suite
+                                </button>
+                            )}
+                        </div>
+                    </article>
+                );
+            })
+        }
     </div>
 </section>
 
 <script>
-    document.querySelectorAll('.expand-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+    document.querySelectorAll(".expand-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
             const description = btn.previousElementSibling as HTMLElement;
-            const isExpanded = btn.getAttribute('data-expanded') === 'true';
+            const isExpanded = btn.getAttribute("data-expanded") === "true";
 
             if (isExpanded) {
                 description.textContent = description.dataset.truncated!;
-                btn.textContent = 'Lire la suite';
-                btn.setAttribute('data-expanded', 'false');
+                btn.textContent = "Lire la suite";
+                btn.setAttribute("data-expanded", "false");
             } else {
                 description.textContent = description.dataset.full!;
-                btn.textContent = 'Réduire';
-                btn.setAttribute('data-expanded', 'true');
+                btn.textContent = "Réduire";
+                btn.setAttribute("data-expanded", "true");
             }
         });
     });
@@ -111,14 +126,17 @@ const speakers: Speaker[] = dataLines.map((line) => {
     }
 
     .speakers-grid {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
         gap: 2rem;
     }
 
     .speaker-card {
         display: flex;
-        gap: 1.5rem;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1rem;
         padding: 1.5rem;
         border: 1px solid #ddd;
         border-radius: 8px;
@@ -165,20 +183,17 @@ const speakers: Speaker[] = dataLines.map((line) => {
 
     @media (max-width: 600px) {
         .speakers-grid {
+            grid-template-columns: 1fr;
             gap: 1rem;
         }
 
         .speaker-card {
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
             padding: 1rem;
-            gap: 1rem;
         }
 
         .speaker-photo {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
         }
     }
 </style>
