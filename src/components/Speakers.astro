@@ -55,7 +55,22 @@ const speakers: Speaker[] = dataLines
 ---
 
 <section class="speakers">
-    <h2>Intervenants</h2>
+    <div class="speakers-header">
+        <h2>Intervenants</h2>
+        <button
+            class="general-card-btn"
+            type="button"
+            title="Télécharger l'affiche générale"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Affiche générale
+        </button>
+    </div>
+    <script id="speakers-data" type="application/json" set:html={JSON.stringify(speakers.map(s => ({ name: s.name, title: s.title })))} />
     <div class="speakers-grid">
         {
             speakers.map((speaker) => {
@@ -286,6 +301,135 @@ const speakers: Speaker[] = dataLines
             }
         });
     });
+
+    async function generateGeneralCard(talks: { name: string; title: string }[]) {
+        const S = 2;
+        const W = 1200 * S;
+        const H = 630 * S;
+        const canvas = document.createElement("canvas");
+        canvas.width = W;
+        canvas.height = H;
+        const ctx = canvas.getContext("2d")!;
+
+        const bgImage = await loadImage("/optics.jpg");
+        const bgAspect = bgImage.width / bgImage.height;
+        const targetAspect = W / H;
+        let sw: number, sh: number, sx: number, sy: number;
+        if (bgAspect > targetAspect) {
+            sh = bgImage.height;
+            sw = sh * targetAspect;
+            sx = (bgImage.width - sw) / 2;
+            sy = 0;
+        } else {
+            sw = bgImage.width;
+            sh = sw / targetAspect;
+            sx = 0;
+            sy = (bgImage.height - sh) / 2;
+        }
+        ctx.drawImage(bgImage, sx, sy, sw, sh, 0, 0, W, H);
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+        ctx.fillRect(0, 0, W, H);
+
+        const leftPadding = 50 * S;
+        const leftColWidth = 420 * S;
+        const rightX = leftPadding + leftColWidth + 40 * S;
+        const rightColWidth = W - rightX - 40 * S;
+
+        ctx.textAlign = "left";
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = `bold ${42 * S}px system-ui, -apple-system, sans-serif`;
+        const headingLines = wrapText(ctx, "Table ronde optique amateur", leftColWidth);
+        let headingY = 100 * S;
+        for (const line of headingLines) {
+            ctx.fillText(line, leftPadding, headingY);
+            headingY += 50 * S;
+        }
+
+        ctx.fillStyle = "rgba(100, 200, 150, 0.9)";
+        ctx.font = `600 ${36 * S}px system-ui, -apple-system, sans-serif`;
+        ctx.fillText(EVENT_DATE, leftPadding, headingY + 20 * S);
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+        ctx.font = `${28 * S}px system-ui, -apple-system, sans-serif`;
+        ctx.fillText(EVENT_URL, leftPadding, headingY + 60 * S);
+
+        const listTop = 70 * S;
+        const listBottom = H - 50 * S;
+        const availableHeight = listBottom - listTop;
+
+        function measureLayout(titleFontSize: number) {
+            const nameFontSize = Math.floor(titleFontSize * 0.72);
+            const titleLH = Math.floor(titleFontSize * 1.3);
+            const nameLH = Math.floor(nameFontSize * 1.3);
+            const gap = Math.floor(titleFontSize * 0.35);
+            let total = 0;
+            const entries: { titleLines: string[]; name: string }[] = [];
+            for (const talk of talks) {
+                ctx.font = `${titleFontSize}px system-ui, -apple-system, sans-serif`;
+                const titleLines = wrapText(ctx, `\u2022 ${talk.title}`, rightColWidth);
+                entries.push({ titleLines, name: talk.name });
+                total += titleLines.length * titleLH + nameLH + gap;
+            }
+            total -= gap;
+            return { entries, titleFontSize, nameFontSize, titleLH, nameLH, gap, total };
+        }
+
+        let titleSize = 26 * S;
+        let layout = measureLayout(titleSize);
+        while (layout.total > availableHeight && titleSize > 14 * S) {
+            titleSize -= 1;
+            layout = measureLayout(titleSize);
+        }
+
+        let y = listTop;
+        for (const entry of layout.entries) {
+            ctx.font = `${layout.titleFontSize}px system-ui, -apple-system, sans-serif`;
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            for (const line of entry.titleLines) {
+                ctx.fillText(line, rightX, y);
+                y += layout.titleLH;
+            }
+
+            ctx.font = `${layout.nameFontSize}px system-ui, -apple-system, sans-serif`;
+            ctx.fillStyle = "rgba(100, 200, 150, 0.8)";
+            ctx.fillText(entry.name, rightX + 16 * S, y);
+            y += layout.nameLH + layout.gap;
+        }
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+        ctx.font = `${14 * S}px system-ui, -apple-system, sans-serif`;
+        ctx.textAlign = "right";
+        ctx.fillText("Isabel Llorente Garcia / Wikimedia Commons", W - 14 * S, H - 12 * S);
+
+        const link = document.createElement("a");
+        link.download = "table-ronde-optique-amateur-affiche.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    }
+
+    const generalBtn = document.querySelector(".general-card-btn");
+    if (generalBtn) {
+        generalBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            const btn = generalBtn as HTMLElement;
+            btn.style.opacity = "0.5";
+            btn.style.pointerEvents = "none";
+
+            try {
+                const dataEl = document.getElementById("speakers-data");
+                const talks: { name: string; title: string }[] = dataEl ? JSON.parse(dataEl.textContent || "[]") : [];
+                await generateGeneralCard(talks);
+            } catch (err) {
+                console.error("Failed to generate general card:", err);
+                alert("Erreur lors de la génération de l'affiche");
+            } finally {
+                btn.style.opacity = "";
+                btn.style.pointerEvents = "";
+            }
+        });
+    }
 </script>
 
 <style>
@@ -297,9 +441,36 @@ const speakers: Speaker[] = dataLines
         box-sizing: border-box;
     }
 
-    .speakers h2 {
+    .speakers-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
         max-width: 1200px;
         margin: 0 auto 1.5rem;
+    }
+
+    .speakers h2 {
+        margin: 0;
+    }
+
+    .general-card-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        background: rgba(0, 0, 0, 0.05);
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        color: #555;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+        white-space: nowrap;
+    }
+
+    .general-card-btn:hover {
+        background: rgba(0, 0, 0, 0.1);
+        color: #333;
     }
 
     .speakers-grid {
