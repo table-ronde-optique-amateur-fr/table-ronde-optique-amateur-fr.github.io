@@ -1,0 +1,373 @@
+---
+import { loadSpeakers } from "../data/parseSpeakers";
+import type { Speaker } from "../data/parseSpeakers";
+
+const speakers = loadSpeakers();
+const speakersByName = new Map(speakers.map((s) => [s.name, s]));
+
+interface TalkSlot {
+    type: "talk";
+    start: string;
+    end: string;
+    speakerName: string;
+    speaker?: Speaker;
+}
+
+interface MarkerSlot {
+    type: "intro" | "pause" | "cloture";
+    time: string;
+    label: string;
+}
+
+type Slot = TalkSlot | MarkerSlot;
+
+interface DaySchedule {
+    date: string;
+    isoDate: string;
+    discordUrl: string;
+    slots: Slot[];
+}
+
+const schedule: DaySchedule[] = [
+    {
+        date: "4 mars",
+        isoDate: "2026-03-04",
+        discordUrl: "https://discord.gg/astro-fr-489463570552324097?event=1459141651069927617",
+        slots: [
+            { type: "intro", time: "19h00", label: "Introduction" },
+            { type: "talk", start: "19:05", end: "19:30", speakerName: "Jean-Pierre Gelabert" },
+            { type: "talk", start: "19:30", end: "19:55", speakerName: "Raphaël Labro" },
+            { type: "pause", time: "~20h00", label: "Courte pause" },
+            { type: "talk", start: "20:05", end: "20:30", speakerName: "Victor Poughon" },
+            { type: "talk", start: "20:30", end: "20:55", speakerName: "Alain Spang" },
+            { type: "cloture", time: "~21h00", label: "Clôture" },
+        ],
+    },
+    {
+        date: "5 mars",
+        isoDate: "2026-03-05",
+        discordUrl: "https://discord.gg/astro-fr-489463570552324097?event=1459165623379693696",
+        slots: [
+            { type: "intro", time: "19h00", label: "Introduction" },
+            { type: "talk", start: "19:05", end: "19:30", speakerName: "Paul Faÿs-Long" },
+            { type: "talk", start: "19:30", end: "19:55", speakerName: "Denis Bernard" },
+            { type: "pause", time: "~20h00", label: "Courte pause" },
+            { type: "talk", start: "20:05", end: "20:30", speakerName: "Eric Royer" },
+            { type: "talk", start: "20:30", end: "20:55", speakerName: "Lucas Sifoni" },
+            { type: "cloture", time: "~21h00", label: "Clôture" },
+        ],
+    },
+];
+
+for (const day of schedule) {
+    for (const slot of day.slots) {
+        if (slot.type === "talk") {
+            slot.speaker = speakersByName.get(slot.speakerName);
+        }
+    }
+}
+
+const location = "Discord Astro-FR - canal fabrication et contrôle optiques";
+const siteUrl = "https://table-ronde-optique-amateur.fr/";
+
+function formatTime(hhmm: string): string {
+    return hhmm.replace(":", "h");
+}
+
+function toGoogleDate(isoDate: string, time: string): string {
+    return `${isoDate.replace(/-/g, "")}T${time.replace(/:/g, "")}00`;
+}
+
+function buildGoogleUrl(day: DaySchedule, slot: TalkSlot): string {
+    const title = `${slot.speakerName} — ${slot.speaker?.title || ""}`;
+    const desc = slot.speaker?.description
+        ? `${slot.speaker.description}\n\nProgramme : ${siteUrl}\nRejoindre : ${day.discordUrl}`
+        : `Programme : ${siteUrl}\nRejoindre : ${day.discordUrl}`;
+    const params = new URLSearchParams({
+        action: "TEMPLATE",
+        text: title,
+        dates: `${toGoogleDate(day.isoDate, slot.start)}/${toGoogleDate(day.isoDate, slot.end)}`,
+        details: desc,
+        location: location,
+        ctz: "Europe/Paris",
+    });
+    return `https://www.google.com/calendar/render?${params.toString()}`;
+}
+---
+
+<section class="timetable">
+    <h2>Programme</h2>
+    <div class="timetable-grid">
+        {schedule.map((day) => (
+            <div class="day-column">
+                <h3>{day.date}</h3>
+                <div class="slots">
+                    {day.slots.map((slot) => {
+                        if (slot.type !== "talk") {
+                            return (
+                                <div class={`slot slot-${slot.type}`}>
+                                    <span class="slot-time">{slot.time}</span>
+                                    <span class="slot-label">{slot.label}</span>
+                                </div>
+                            );
+                        }
+                        const speaker = slot.speaker;
+                        return (
+                            <div
+                                class="slot slot-talk"
+                                data-iso-date={day.isoDate}
+                                data-start={slot.start}
+                                data-end={slot.end}
+                                data-speaker={slot.speakerName}
+                                data-title={speaker?.title || ""}
+                                data-description={speaker?.description || ""}
+                                data-discord-url={day.discordUrl}
+                            >
+                                <span class="slot-time">{formatTime(slot.start)}</span>
+                                <div class="slot-content">
+                                    <span class="slot-speaker">{slot.speakerName}</span>
+                                    <span class="slot-talk-title">{speaker?.title}</span>
+                                    <span class="slot-actions">
+                                        <a
+                                            href={buildGoogleUrl(day, slot)}
+                                            target="_blank"
+                                            rel="noopener"
+                                            class="cal-btn"
+                                            title="Ajouter à Google Agenda"
+                                        >
+                                            Google
+                                        </a>
+                                        <button
+                                            class="cal-btn ics-btn"
+                                            type="button"
+                                            title="Télécharger un fichier ICS"
+                                        >
+                                            ICS
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        ))}
+    </div>
+</section>
+
+<script>
+    const location = "Discord Astro-FR - canal fabrication et contrôle optiques";
+    const siteUrl = "https://table-ronde-optique-amateur.fr/";
+
+    function generateICS(
+        title: string,
+        isoDate: string,
+        start: string,
+        end: string,
+        description: string,
+        discordUrl: string
+    ): string {
+        const formatDt = (date: string, time: string) =>
+            `${date.replace(/-/g, "")}T${time.replace(/:/g, "")}00`;
+        const uid = `${isoDate}${start.replace(/:/g, "")}-${Math.random().toString(36).substr(2, 9)}@table-ronde-optique`;
+        const now =
+            new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+        const desc = description
+            ? `${description}\\n\\nProgramme : ${siteUrl}\\nRejoindre : ${discordUrl}`
+            : `Programme : ${siteUrl}\\nRejoindre : ${discordUrl}`;
+
+        return [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Table Ronde Optique Amateur//FR",
+            "CALSCALE:GREGORIAN",
+            "METHOD:PUBLISH",
+            "BEGIN:VTIMEZONE",
+            "TZID:Europe/Paris",
+            "BEGIN:STANDARD",
+            "DTSTART:19710101T030000",
+            "RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU",
+            "TZOFFSETFROM:+0200",
+            "TZOFFSETTO:+0100",
+            "END:STANDARD",
+            "BEGIN:DAYLIGHT",
+            "DTSTART:19710101T020000",
+            "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU",
+            "TZOFFSETFROM:+0100",
+            "TZOFFSETTO:+0200",
+            "END:DAYLIGHT",
+            "END:VTIMEZONE",
+            "BEGIN:VEVENT",
+            `UID:${uid}`,
+            `DTSTAMP:${now}`,
+            `DTSTART;TZID=Europe/Paris:${formatDt(isoDate, start)}`,
+            `DTEND;TZID=Europe/Paris:${formatDt(isoDate, end)}`,
+            `SUMMARY:${title}`,
+            `DESCRIPTION:${desc}`,
+            `LOCATION:${location}`,
+            "END:VEVENT",
+            "END:VCALENDAR",
+        ].join("\r\n");
+    }
+
+    function downloadICS(
+        speaker: string,
+        talkTitle: string,
+        isoDate: string,
+        start: string,
+        end: string,
+        description: string,
+        discordUrl: string
+    ) {
+        const title = `${speaker} — ${talkTitle}`;
+        const ics = generateICS(title, isoDate, start, end, description, discordUrl);
+        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        const slug = speaker.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        link.download = `${slug}-table-ronde-optique-${isoDate}.ics`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    document.querySelectorAll(".slot-talk .ics-btn").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const slot = btn.closest(".slot-talk") as HTMLElement;
+            downloadICS(
+                slot.dataset.speaker || "",
+                slot.dataset.title || "",
+                slot.dataset.isoDate || "",
+                slot.dataset.start || "",
+                slot.dataset.end || "",
+                slot.dataset.description || "",
+                slot.dataset.discordUrl || ""
+            );
+        });
+    });
+</script>
+
+<style>
+    .timetable {
+        margin: 2rem 0;
+    }
+
+    .timetable h2 {
+        margin-bottom: 1.5rem;
+    }
+
+    .timetable-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .day-column h3 {
+        margin: 0 0 1rem;
+        text-transform: capitalize;
+    }
+
+    .slots {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .slot {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.6rem 0.75rem;
+        border-left: 3px solid #ddd;
+    }
+
+    .slot-time {
+        flex-shrink: 0;
+        width: 3.5rem;
+        font-size: 0.8rem;
+        color: #888;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .slot-label {
+        font-size: 0.85rem;
+        color: #999;
+        font-style: italic;
+    }
+
+    .slot-intro {
+        border-left-color: var(--accent, #2337ff);
+    }
+
+    .slot-pause {
+        border-left-color: transparent;
+        padding-top: 0.4rem;
+        padding-bottom: 0.4rem;
+    }
+
+    .slot-cloture {
+        border-left-color: var(--accent, #2337ff);
+    }
+
+    .slot-talk {
+        border-left-color: var(--accent, #2337ff);
+        background: #fafafa;
+        border-radius: 0 6px 6px 0;
+        margin-bottom: 2px;
+    }
+
+    .slot-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        min-width: 0;
+    }
+
+    .slot-speaker {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .slot-talk-title {
+        font-size: 0.8rem;
+        color: #555;
+        font-style: italic;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .slot-actions {
+        display: flex;
+        gap: 0.3rem;
+        margin-top: 0.25rem;
+    }
+
+    .cal-btn {
+        padding: 0.1rem 0.35rem;
+        font-size: 0.65rem;
+        border-radius: 3px;
+        text-decoration: none;
+        cursor: pointer;
+        border: 1px solid #ccc;
+        background: transparent;
+        color: #666;
+        font-family: inherit;
+    }
+
+    .cal-btn:hover {
+        background: rgba(0, 0, 0, 0.07);
+        color: #333;
+    }
+
+    @media (max-width: 600px) {
+        .timetable-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
