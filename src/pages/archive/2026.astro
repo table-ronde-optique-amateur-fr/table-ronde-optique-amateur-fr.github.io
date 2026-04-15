@@ -1,0 +1,56 @@
+---
+import ArchivePage from "../../layouts/ArchivePage.astro";
+import ArchiveTimetable from "../../components/ArchiveTimetable.astro";
+import ArchiveSpeakers from "../../components/ArchiveSpeakers.astro";
+import { loadSpeakers } from "../../data/parseSpeakers";
+import type { DaySchedule } from "../../data/types";
+import { resources } from "../../data/2026/edition";
+
+const speakers = loadSpeakers(2026);
+const speakersByName = new Map(speakers.map((s) => [s.name, s]));
+
+const schedule: DaySchedule[] = [
+    {
+        date: "4 mars",
+        slots: [
+            { type: "intro", time: "19h00", label: "Introduction" },
+            { type: "talk", start: "19:05", end: "19:30", speakerName: "Jean-Pierre Gelabert" },
+            { type: "talk", start: "19:30", end: "19:55", speakerName: "Lucas Sifoni" },
+            { type: "pause", time: "~20h00", label: "Courte pause" },
+            { type: "talk", start: "20:05", end: "20:30", speakerName: "Victor Poughon" },
+            { type: "talk", start: "20:30", end: "20:55", speakerName: "Alain Spang" },
+            { type: "cloture", time: "~21h00", label: "Clôture" },
+        ],
+    },
+    {
+        date: "5 mars",
+        slots: [
+            { type: "intro", time: "19h00", label: "Introduction" },
+            { type: "talk", start: "19:05", end: "19:30", speakerName: "Paul Faÿs-Long" },
+            { type: "talk", start: "19:30", end: "19:55", speakerName: "Denis Bernard" },
+            { type: "pause", time: "~20h00", label: "Courte pause" },
+            { type: "talk", start: "20:05", end: "20:30", speakerName: "Eric Royer" },
+            { type: "talk", start: "20:30", end: "20:55", speakerName: "Raphaël Labro" },
+            { type: "cloture", time: "~21h00", label: "Clôture" },
+        ],
+    },
+];
+
+for (const day of schedule) {
+    for (const slot of day.slots) {
+        if (slot.type === "talk") {
+            slot.speaker = speakersByName.get(slot.speakerName);
+        }
+    }
+}
+---
+
+<ArchivePage
+    year={2026}
+    date="4 et 5 mars 2026"
+    venue='L&#39;événement s&#39;est tenu sur le <a href="https://astro-fr.fr/" target="_blank">Discord Astro-FR</a>, dans le canal «&nbsp;fabrication&nbsp;et&nbsp;contrôle&nbsp;optiques&nbsp;».'
+    description="Archives de l'édition 2026 de la table ronde optique amateur francophone : programme, intervenants et supports de présentation."
+>
+    <ArchiveTimetable schedule={schedule} resources={resources} />
+    <ArchiveSpeakers speakers={speakers} resources={resources} />
+</ArchivePage>

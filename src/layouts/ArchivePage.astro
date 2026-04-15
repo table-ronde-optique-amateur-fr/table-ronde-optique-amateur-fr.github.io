@@ -1,0 +1,88 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import { SITE_TITLE } from "../consts";
+
+interface Props {
+    year: number;
+    date: string;
+    venue: string;
+    description: string;
+}
+
+const { year, date, venue, description } = Astro.props;
+const pageTitle = `Édition ${year} — ${SITE_TITLE}`;
+---
+
+<!doctype html>
+<html lang="fr">
+    <head>
+        <BaseHead title={pageTitle} description={description} image="/table-ronde-optique-amateur-affiche.jpg" />
+    </head>
+    <body>
+        <Header />
+        <main>
+            <p class="back"><a href="/">&larr; Retour</a></p>
+
+            <section class="hero">
+                <h1>Édition {year}</h1>
+                <p class="date">{date}</p>
+                <p class="venue" set:html={venue} />
+            </section>
+
+            <slot />
+        </main>
+        <Footer />
+    </body>
+</html>
+
+<style>
+    main {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .back {
+        margin-bottom: 1rem;
+    }
+
+    .back a {
+        color: #555;
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+
+    .back a:hover {
+        text-decoration: underline;
+    }
+
+    .hero {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .hero h1 {
+        margin: 0 0 0.5rem 0;
+    }
+
+    .hero .date {
+        font-size: 1.25rem;
+        color: #555;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .hero .venue {
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+    section {
+        margin-bottom: 2rem;
+    }
+
+    section h2 {
+        margin-bottom: 1rem;
+    }
+</style>

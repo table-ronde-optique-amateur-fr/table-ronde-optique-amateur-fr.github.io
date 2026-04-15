@@ -1,7 +1,12 @@
 ---
 import { loadSpeakers } from "../data/parseSpeakers";
 
-const speakers = loadSpeakers();
+interface Props {
+    year: number;
+}
+
+const { year } = Astro.props;
+const speakers = loadSpeakers(year);
 ---
 
 <section class="speakers">

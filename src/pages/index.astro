@@ -1,16 +1,17 @@
 ---
-import AddToCalendar from "../components/AddToCalendar.astro";
 import BaseHead from "../components/BaseHead.astro";
-import DiscordInstructions from "../components/DiscordInstructions.astro";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
-import Speakers from "../components/Speakers.astro";
-import Timetable from "../components/Timetable.astro";
+import ArchiveSpeakers from "../components/ArchiveSpeakers.astro";
+import { loadSpeakers } from "../data/parseSpeakers";
+import { resources as edition2026Resources } from "../data/2026/edition";
 import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
+
+const edition2026Speakers = loadSpeakers(2026);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="fr">
     <head>
         <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} image="/table-ronde-optique-amateur-affiche.jpg" />
     </head>
@@ -19,24 +20,30 @@ import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
         <main>
             <section class="hero">
                 <h1>Table ronde optique amateur francophone</h1>
-                <p class="date">4 et 5 mars 2026 à 19h</p>
-                <AddToCalendar />
-            </section>
-
-            <section class="location">
-                <h2>Lieu</h2>
-                <p>
-                    L'événement se déroule sur le <a href="https://astro-fr.fr/" target="_blank">Discord Astro-FR</a>,
-                    dans le canal «&nbsp;fabrication&nbsp;et&nbsp;contrôle&nbsp;optiques&nbsp;».
+                <p class="subtitle">
+                    Un événement en ligne visant à partager et échanger autour des pratiques d'optique amateur, en français.
                 </p>
-                <p>
-                    <DiscordInstructions />
+                <p class="thanks">
+                    Merci à tous les spectateurs et intervenants de l'édition 2026&nbsp;!
                 </p>
             </section>
 
+            <section class="last-edition">
+                <h2>Édition 2026 — 4 et 5 mars</h2>
+                <p class="last-edition-intro">
+                    Les supports et vidéos des interventions sont désormais disponibles.
+                    Retrouvez le <a href="/archive/2026">programme complet</a> ou accédez directement aux ressources de chaque intervenant&nbsp;ci-dessous.
+                </p>
+            </section>
 
-            <Timetable />
-            <Speakers />
+            <ArchiveSpeakers speakers={edition2026Speakers} resources={edition2026Resources} compact />
+
+            <section class="next-edition">
+                <h2>Prochaine édition</h2>
+                <p>
+                    Une prochaine édition est en préparation. Les informations seront publiées ici dès qu'elles seront disponibles.
+                </p>
+            </section>
         </main>
         <Footer />
     </body>
@@ -58,9 +65,16 @@ import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
         margin: 0 0 0.5rem 0;
     }
 
-    .hero .date {
+    .hero .thanks {
         font-size: 1.25rem;
+        color: var(--accent, #2337ff);
+        font-weight: 600;
+    }
+
+    .hero .subtitle {
         color: #555;
+        max-width: 600px;
+        margin: 0.5rem auto 0;
     }
 
     section {
@@ -71,21 +85,7 @@ import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
         margin-bottom: 1rem;
     }
 
-    .cta {
-        display: inline-block;
-        padding: 0.75rem 1.5rem;
-        background: var(--accent, #4a90d9);
-        color: white;
-        text-decoration: none;
-        border-radius: 4px;
-    }
-
-    .cta:hover {
-        opacity: 0.9;
-    }
-
-    .deadline {
-        font-weight: bold;
-        color: var(--accent, #4a90d9);
+    .last-edition-intro {
+        max-width: 700px;
     }
 </style>

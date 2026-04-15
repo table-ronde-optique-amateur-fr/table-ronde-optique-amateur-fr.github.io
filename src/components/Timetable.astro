@@ -2,7 +2,12 @@
 import { loadSpeakers } from "../data/parseSpeakers";
 import type { Speaker } from "../data/parseSpeakers";
 
-const speakers = loadSpeakers();
+interface Props {
+    year: number;
+}
+
+const { year } = Astro.props;
+const speakers = loadSpeakers(year);
 const speakersByName = new Map(speakers.map((s) => [s.name, s]));
 
 interface TalkSlot {

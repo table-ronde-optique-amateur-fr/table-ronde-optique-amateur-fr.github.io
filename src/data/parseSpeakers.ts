@@ -30,8 +30,8 @@ function getExtension(url: string): string {
     return match ? match[1] : "jpg";
 }
 
-export function loadSpeakers(): Speaker[] {
-    const tsvPath = path.join(process.cwd(), "src/data/speakers.tsv");
+export function loadSpeakers(year: number): Speaker[] {
+    const tsvPath = path.join(process.cwd(), `src/data/${year}/speakers.tsv`);
     const tsvContent = fs.readFileSync(tsvPath, "utf-8");
     const lines = tsvContent.split("\n");
     const dataLines = lines.slice(3).filter((line) => line.trim() !== "");
